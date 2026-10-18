@@ -1,15 +1,17 @@
-import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { db } from '../../../lib/db'
 import type { Cow } from '../../../lib/schemas'
 import { Card } from '../../../components/Card'
 import { CowCard } from './CowCard'
+import { getAllCows, addCow, deleteCow } from '../cowService'
 
 export function CowList() {
-  const farmId = 'farm-1'
-  const cows = useLiveQuery(() => db.cows.where('farmId').equals(farmId).toArray(), [farmId]) ?? []
+  const farmId = '00000000-0000-0000-0000-000000000001' // Your real farm ID
+  
+  const [cows, setCows] = useState<Cow[]>([])
+  const [loading, setLoading] = useState(true)
   const [openForm, setOpenForm] = useState(false)
+
   const [form, setForm] = useState({
     tagId: '',
     name: '',
@@ -21,41 +23,71 @@ export function CowList() {
     notes: ''
   })
 
+  // Fetch cows from Supabase
+   const fetchCows = async () => {
+    try {
+      setLoading(true)
+      const data = await getAllCows(farmId)
+      console.log("🔥 DATA FROM SUPABASE:", data) // <-- Add this line
+      setCows(data)
+    } catch (err) {
+      console.error('Error fetching cows:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load cows when the page opens
+  useEffect(() => {
+    fetchCows()
+  }, [])
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!form.tagId) return
 
-    await db.cows.add({
-      id: crypto.randomUUID(),
-      farmId,
-      tagId: form.tagId,
-      name: form.name || undefined,
-      breed: form.breed,
-      birthDate: form.birthDate,
-      lactationNumber: form.lactationNumber,
-      status: form.status,
-      pregnancyStatus: form.pregnancyStatus,
-      notes: form.notes || undefined,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
+    try {
+      await addCow({
+        id: crypto.randomUUID(), 
+        farmId,
+        tagId: form.tagId,
+        name: form.name || undefined,
+        breed: form.breed,
+        birthDate: form.birthDate,
+        lactationNumber: form.lactationNumber,
+        status: form.status,
+        pregnancyStatus: form.pregnancyStatus,
+        notes: form.notes || undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
 
-    setForm({
-      tagId: '',
-      name: '',
-      breed: 'Friesian',
-      birthDate: '',
-      lactationNumber: 1,
-      status: 'in_milk',
-      pregnancyStatus: 'open',
-      notes: ''
-    })
-    setOpenForm(false)
+      setForm({
+        tagId: '',
+        name: '',
+        breed: 'Friesian',
+        birthDate: '',
+        lactationNumber: 1,
+        status: 'in_milk',
+        pregnancyStatus: 'open',
+        notes: ''
+      })
+      setOpenForm(false)
+      fetchCows() // Refresh the list from the cloud
+    } catch (err) {
+      console.error('Error adding cow:', err)
+      alert('Failed to add cow. Check the browser console.')
+    }
   }
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Delete this cow?')) {
-      await db.cows.delete(id)
+      try {
+        await deleteCow(id)
+        fetchCows() // Refresh the list from the cloud
+      } catch (err) {
+        console.error('Error deleting cow:', err)
+      }
     }
   }
 
@@ -126,25 +158,28 @@ export function CowList() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {cows.length > 0 ? (
-          cows.map((cow) => (
-            <div key={cow.id} className="relative">
-              <CowCard cow={cow} />
-              <button
-                type="button"
-                onClick={() => handleDelete(cow.id)}
-                className="absolute right-4 top-4 rounded-full bg-red-50 p-2 text-red-600 hover:bg-red-100"
-                aria-label={`Delete ${cow.name || cow.tagId}`}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))
-        ) : (
-          <Card className="p-6 text-slate-500 md:col-span-2 xl:col-span-3">No cows yet. Add one to begin.</Card>
-        )}
-      </div>
+      {loading ? (
+        <Card className="p-6 text-center text-slate-500">Loading cows from Supabase...</Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {cows.length > 0 ? (
+            cows.map((cow) => (
+              <div key={cow.id} className="flex flex-col">
+                <CowCard cow={cow} />
+                <button
+                  type="button"
+                  onClick={() => handleDelete(cow.id)}
+                  className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 self-end"
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            ))
+          ) : (
+            <Card className="p-6 text-slate-500 md:col-span-2 xl:col-span-3">No cows yet. Add one to begin.</Card>
+          )}
+        </div>
+      )}
     </div>
   )
 }

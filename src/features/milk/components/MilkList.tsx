@@ -1,14 +1,18 @@
-import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { db } from '../../../lib/db'
+import type { Cow, MilkRecord } from '../../../lib/schemas'
 import { Card } from '../../../components/Card'
+import { getAllCows } from '../../cows/cowService'
+import { getAllMilkRecords, addMilkRecord, deleteMilkRecord } from '../milkService'
 
 export function MilkList() {
-  const farmId = 'farm-1'
-  const records = useLiveQuery(() => db.milkRecords.where('farmId').equals(farmId).toArray(), [farmId]) ?? []
-  const cows = useLiveQuery(() => db.cows.where('farmId').equals(farmId).toArray(), [farmId]) ?? []
+  const farmId = '00000000-0000-0000-0000-000000000001'
+  
+  const [records, setRecords] = useState<MilkRecord[]>([])
+  const [cows, setCows] = useState<Cow[]>([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+
   const [form, setForm] = useState({
     cowId: '',
     date: new Date().toISOString().slice(0, 10),
@@ -17,32 +21,73 @@ export function MilkList() {
     recordedBy: ''
   })
 
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [recordsData, cowsData] = await Promise.all([
+        getAllMilkRecords(farmId),
+        getAllCows(farmId)
+      ])
+      setRecords(recordsData)
+      setCows(cowsData)
+    } catch (err) {
+      console.error('Error loading milk data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!form.cowId || !form.recordedBy) return
 
-    await db.milkRecords.add({
-      id: crypto.randomUUID(),
-      farmId,
-      cowId: form.cowId,
-      date: form.date,
-      session: form.session,
-      litres: Number(form.litres),
-      recordedBy: form.recordedBy,
-      createdAt: new Date()
-    })
+    try {
+      await addMilkRecord({
+        id: crypto.randomUUID(),
+        farmId,
+        cowId: form.cowId,
+        date: form.date,
+        session: form.session,
+        litres: Number(form.litres),
+        recordedBy: form.recordedBy,
+        createdAt: new Date()
+      })
 
-    setForm({
-      cowId: '',
-      date: new Date().toISOString().slice(0, 10),
-      session: 'am',
-      litres: '0',
-      recordedBy: ''
-    })
-    setShowForm(false)
+      setForm({
+        cowId: '',
+        date: new Date().toISOString().slice(0, 10),
+        session: 'am',
+        litres: '0',
+        recordedBy: ''
+      })
+      setShowForm(false)
+      loadData() // Refresh the list
+    } catch (err) {
+      console.error('Error adding record:', err)
+      alert('Failed to save. Check console.')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Delete this milk record?')) {
+      try {
+        await deleteMilkRecord(id)
+        loadData() // Refresh the list
+      } catch (err) {
+        console.error('Error deleting:', err)
+      }
+    }
   }
 
   const total = records.reduce((sum, item) => sum + item.litres, 0)
+
+  if (loading) {
+    return <div className="p-6 text-slate-500">Loading milk records from Supabase...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -122,7 +167,7 @@ export function MilkList() {
             </thead>
             <tbody>
               {records.length > 0 ? (
-                [...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => (
+                records.map((record) => (
                   <tr key={record.id} className="border-t border-slate-200 hover:bg-slate-50">
                     <td className="px-5 py-3">{record.date}</td>
                     <td className="px-5 py-3">{cows.find((cow) => cow.id === record.cowId)?.name || cows.find((cow) => cow.id === record.cowId)?.tagId || 'Unknown'}</td>
@@ -130,7 +175,7 @@ export function MilkList() {
                     <td className="px-5 py-3 font-semibold text-sky-700">{record.litres}L</td>
                     <td className="px-5 py-3">{record.recordedBy}</td>
                     <td className="px-5 py-3">
-                      <button type="button" onClick={async () => { await db.milkRecords.delete(record.id) }} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
+                      <button type="button" onClick={() => handleDelete(record.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))

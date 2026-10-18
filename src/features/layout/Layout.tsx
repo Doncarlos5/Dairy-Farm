@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
-import { Home, Users, Droplets, Activity, HeartPulse, FileText, Menu, X } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Home, Users, Droplets, Activity, HeartPulse, FileText, Menu, X, LogOut } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { useAuth } from '../auth/AuthContext'
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Home },
@@ -14,14 +15,21 @@ const navItems = [
 export function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { profile, signOut } = useAuth()
+
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login')
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-100">
       <aside
         className={
           sidebarOpen
-            ? 'w-64 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300'
-            : 'w-20 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300'
+            ? 'w-64 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300 flex flex-col'
+            : 'w-20 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300 flex flex-col'
         }
       >
         <div className="flex items-center justify-between p-4 border-b border-sky-600/50">
@@ -35,7 +43,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <nav className="mt-6 space-y-2 px-2">
+        <nav className="mt-6 space-y-2 px-2 flex-1">
           {navItems.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path
             return (
@@ -53,6 +61,23 @@ export function Layout({ children }: { children: ReactNode }) {
             )
           })}
         </nav>
+
+        {/* User Profile & Logout Section */}
+        <div className="border-t border-sky-600/50 p-4 space-y-3">
+          {sidebarOpen && profile && (
+            <div className="text-sm">
+              <p className="font-semibold text-white">{profile.name}</p>
+              <p className="text-xs text-sky-200 capitalize">{profile.role}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sky-100 hover:bg-red-500/20 hover:text-red-100 transition-colors"
+          >
+            <LogOut size={18} />
+            {sidebarOpen && <span className="text-sm font-medium">Sign out</span>}
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
