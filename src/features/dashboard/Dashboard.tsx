@@ -38,7 +38,7 @@ export function Dashboard() {
     .reduce((sum, r) => sum + r.litres, 0)
 
   const stats = [
-    { label: 'Total cows', value: cows.length, icon: Users, tone: 'bg-sky-100 text-sky-700' },
+    { label: 'Total cows', value: cows.length, icon: Users, tone: 'bg-emerald-100 text-emerald-700' },
     { label: 'In milk', value: cows.filter((cow) => cow.status === 'in_milk').length, icon: Droplets, tone: 'bg-cyan-100 text-cyan-700' },
     { label: 'Pregnant', value: cows.filter((cow) => ['bred', 'confirmed'].includes(cow.pregnancyStatus)).length, icon: Activity, tone: 'bg-violet-100 text-violet-700' },
     { label: 'Health records', value: healthRecords.length, icon: HeartPulse, tone: 'bg-rose-100 text-rose-700' }
@@ -88,7 +88,7 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-5">
           <p className="text-sm text-slate-500">Today's milk</p>
-          <p className="mt-2 text-3xl font-bold text-sky-700">{todayLitres.toFixed(1)}L</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-700">{todayLitres.toFixed(1)}L</p>
           <p className="mt-1 text-xs text-slate-500">Across all sessions today</p>
         </Card>
         <Card className="p-5">
@@ -109,21 +109,21 @@ export function Dashboard() {
           <Link to="/cows" className="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:border-sky-300 hover:bg-sky-50 transition-all">
             <p className="font-semibold text-slate-800">Register cow</p>
             <p className="mt-1 text-sm text-slate-600">Add new animals to the herd.</p>
-            <div className="mt-3 inline-flex items-center gap-2 text-sm text-sky-700">
+            <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-700">
               Open cows <ArrowRight size={16} />
             </div>
           </Link>
           <Link to="/milk" className="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:border-sky-300 hover:bg-sky-50 transition-all">
             <p className="font-semibold text-slate-800">Log milk</p>
             <p className="mt-1 text-sm text-slate-600">Track daily production by session.</p>
-            <div className="mt-3 inline-flex items-center gap-2 text-sm text-sky-700">
+            <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-700">
               Go to milk <ArrowRight size={16} />
             </div>
           </Link>
           <Link to="/breeding" className="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:border-sky-300 hover:bg-sky-50 transition-all">
             <p className="font-semibold text-slate-800">Breeding plan</p>
             <p className="mt-1 text-sm text-slate-600">Monitor pregnancy and calving dates.</p>
-            <div className="mt-3 inline-flex items-center gap-2 text-sm text-sky-700">
+            <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-700">
               Review breeding <ArrowRight size={16} />
             </div>
           </Link>
@@ -152,7 +152,7 @@ export function Dashboard() {
                   <td className="px-5 py-3">{cow.name || 'Unnamed'}</td>
                   <td className="px-5 py-3">{cow.breed}</td>
                   <td className="px-5 py-3">
-                    <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700">
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
                       {cow.status}
                     </span>
                   </td>

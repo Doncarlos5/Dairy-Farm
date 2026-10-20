@@ -33,7 +33,7 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
             <Milk size={24} />
           </div>
           <h2 className="mt-4 text-2xl font-bold text-slate-900">Welcome back</h2>
@@ -72,7 +72,7 @@ export function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
+            className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {loading ? 'Logging in...' : 'Sign in'}
           </button>

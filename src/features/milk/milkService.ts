@@ -42,3 +42,12 @@ export async function deleteMilkRecord(id: string): Promise<void> {
   const { error } = await supabase.from('milk_records').delete().eq('id', id)
   if (error) throw error
 }
+export async function getMilkForCow(cowId: string): Promise<MilkRecord[]> {
+  const { data, error } = await supabase
+    .from('milk_records')
+    .select('*')
+    .eq('cow_id', cowId)
+    .order('date', { ascending: false })
+  if (error) throw error
+  return (data || []).map(mapMilkRecord)
+}

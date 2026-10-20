@@ -9,6 +9,7 @@ import { NoteList } from '../features/notes/components/NoteList'
 import { NotFound } from '../features/layout/NotFound'
 import { Login } from '../features/auth/Login'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
+import { CowProfile } from '../features/cows/components/cowProfile'
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
       {
         path: '/cows',
         element: <Layout><CowList /></Layout>
+      },
+     {
+        path: '/cows/:id',
+        element: <Layout><CowProfile /></Layout>
       },
       {
         path: '/milk',

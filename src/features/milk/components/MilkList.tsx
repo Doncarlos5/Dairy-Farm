@@ -93,13 +93,13 @@ export function MilkList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-600 font-semibold">Production</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">Production</p>
           <h3 className="mt-1 text-3xl font-bold text-slate-900">Milk records</h3>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
         >
           <Plus size={16} /> {showForm ? 'Close' : 'Add record'}
         </button>
@@ -107,7 +107,7 @@ export function MilkList() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-5"><p className="text-sm text-slate-500">Records</p><p className="mt-2 text-3xl font-bold">{records.length}</p></Card>
-        <Card className="p-5"><p className="text-sm text-slate-500">Total litres</p><p className="mt-2 text-3xl font-bold text-sky-700">{total.toFixed(1)}</p></Card>
+        <Card className="p-5"><p className="text-sm text-slate-500">Total litres</p><p className="mt-2 text-3xl font-bold text-emerald-700">{total.toFixed(1)}</p></Card>
         <Card className="p-5"><p className="text-sm text-slate-500">Average</p><p className="mt-2 text-3xl font-bold text-emerald-700">{records.length ? (total / records.length).toFixed(1) : '0.0'}</p></Card>
       </div>
 
@@ -146,7 +146,7 @@ export function MilkList() {
             </label>
             <div className="md:col-span-2 flex justify-end gap-3">
               <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-slate-300 px-4 py-2 text-slate-700">Cancel</button>
-              <button type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700">Save record</button>
+              <button type="submit" className="rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save record</button>
             </div>
           </form>
         </Card>
@@ -172,7 +172,7 @@ export function MilkList() {
                     <td className="px-5 py-3">{record.date}</td>
                     <td className="px-5 py-3">{cows.find((cow) => cow.id === record.cowId)?.name || cows.find((cow) => cow.id === record.cowId)?.tagId || 'Unknown'}</td>
                     <td className="px-5 py-3 uppercase">{record.session}</td>
-                    <td className="px-5 py-3 font-semibold text-sky-700">{record.litres}L</td>
+                    <td className="px-5 py-3 font-semibold text-emerald-700">{record.litres}L</td>
                     <td className="px-5 py-3">{record.recordedBy}</td>
                     <td className="px-5 py-3">
                       <button type="button" onClick={() => handleDelete(record.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>

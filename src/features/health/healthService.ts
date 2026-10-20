@@ -60,3 +60,12 @@ export function isUnderWithdrawal(record: HealthRecord): boolean {
   const today = new Date().toISOString().slice(0, 10)
   return record.withdrawalEndDate >= today
 }
+export async function getHealthForCow(cowId: string): Promise<HealthRecord[]> {
+  const { data, error } = await supabase
+    .from('health_records')
+    .select('*')
+    .eq('cow_id', cowId)
+    .order('date', { ascending: false })
+  if (error) throw error
+  return (data || []).map(mapHealthRecord)
+}

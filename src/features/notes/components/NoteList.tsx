@@ -97,13 +97,13 @@ export function NoteList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-600 font-semibold">Communication</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">Communication</p>
           <h3 className="mt-1 text-3xl font-bold text-slate-900">Notes</h3>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
         >
           <Plus size={16} /> {showForm ? 'Close' : 'Add note'}
         </button>
@@ -116,7 +116,7 @@ export function NoteList() {
         </Card>
         <Card className="p-5">
           <p className="text-sm text-slate-500">Cow-specific</p>
-          <p className="mt-2 text-3xl font-bold text-sky-700">{cowNotes.length}</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-700">{cowNotes.length}</p>
         </Card>
         <Card className="p-5">
           <p className="text-sm text-slate-500">General farm</p>
@@ -185,7 +185,7 @@ export function NoteList() {
               </button>
               <button
                 type="submit"
-                className="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700"
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
               >
                 Save note
               </button>
@@ -210,7 +210,7 @@ export function NoteList() {
                 </button>
 
                 <div className="flex items-start gap-3 pr-8">
-                  <div className="rounded-lg bg-sky-100 p-2 text-sky-700">
+                  <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
                     <FileText size={18} />
                   </div>
                   <div className="min-w-0">

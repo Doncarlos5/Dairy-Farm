@@ -4,6 +4,7 @@ import type { Cow } from '../../../lib/schemas'
 import { Card } from '../../../components/Card'
 import { CowCard } from './CowCard'
 import { getAllCows, addCow, deleteCow } from '../cowService'
+import { Link } from 'react-router-dom'
 
 export function CowList() {
   const farmId = '00000000-0000-0000-0000-000000000001' // Your real farm ID
@@ -95,13 +96,13 @@ export function CowList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-600 font-semibold">Herd</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">Herd</p>
           <h3 className="mt-1 text-3xl font-bold text-slate-900">Cows</h3>
         </div>
         <button
           type="button"
           onClick={() => setOpenForm(!openForm)}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
         >
           <Plus size={16} /> {openForm ? 'Close' : 'Add cow'}
         </button>
@@ -152,7 +153,7 @@ export function CowList() {
             </label>
             <div className="md:col-span-2 flex justify-end gap-3">
               <button type="button" onClick={() => setOpenForm(false)} className="rounded-xl border border-slate-300 px-4 py-2 text-slate-700">Cancel</button>
-              <button type="submit" className="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700">Save cow</button>
+              <button type="submit" className="rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save cow</button>
             </div>
           </form>
         </Card>
@@ -164,15 +165,23 @@ export function CowList() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {cows.length > 0 ? (
             cows.map((cow) => (
-              <div key={cow.id} className="flex flex-col">
-                <CowCard cow={cow} />
-                <button
-                  type="button"
-                  onClick={() => handleDelete(cow.id)}
-                  className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 self-end"
-                >
-                  <Trash2 size={14} /> Delete
-                </button>
+              <div key={cow.id} className="flex flex-col relative group">
+                
+                {/* Wrap the card in a Link */}
+                <Link to={`/cows/${cow.id}`}>
+                  <CowCard cow={cow} />
+                </Link>
+
+                {/* Delete button positioned at the bottom */}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(cow.id)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100"
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
               </div>
             ))
           ) : (

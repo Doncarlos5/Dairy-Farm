@@ -51,3 +51,8 @@ export async function deleteCow(id: string): Promise<void> {
   const { error } = await supabase.from('cows').delete().eq('id', id)
   if (error) throw error
 }
+export async function getCow(id: string): Promise<Cow | null> {
+  const { data, error } = await supabase.from('cows').select('*').eq('id', id).single()
+  if (error) return null
+  return mapCow(data)
+}

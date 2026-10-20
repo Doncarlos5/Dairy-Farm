@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Users, Droplets, Activity, HeartPulse, FileText, Menu, X, LogOut } from 'lucide-react'
+import { Home, Users, Droplets, Activity, HeartPulse, FileText, Menu, X, LogOut, Coins } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '../auth/AuthContext'
 
@@ -9,7 +9,9 @@ const navItems = [
   { path: '/milk', label: 'Milk Records', icon: Droplets },
   { path: '/breeding', label: 'Breeding', icon: Activity },
   { path: '/health', label: 'Health', icon: HeartPulse },
-  { path: '/notes', label: 'Notes', icon: FileText }
+  { path: '/notes', label: 'Notes', icon: FileText },
+  // We will uncomment this when we build the finances page
+  // { path: '/finances', label: 'Finances', icon: Coins }, 
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -24,26 +26,33 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <aside
+   <div className="flex min-h-screen bg-[#fdf6f0] font-sans">     
+    <aside
         className={
           sidebarOpen
-            ? 'w-64 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300 flex flex-col'
-            : 'w-20 bg-gradient-to-b from-sky-700 to-sky-900 text-white transition-all duration-300 flex flex-col'
+            ? 'w-64 bg-[#0a2e23] text-white transition-all duration-300 flex flex-col' // Premium dark green
+            : 'w-20 bg-[#0a2e23] text-white transition-all duration-300 flex flex-col'
         }
       >
-        <div className="flex items-center justify-between p-4 border-b border-sky-600/50">
-          {sidebarOpen && <h1 className="text-xl font-bold">Dairy Farm</h1>}
+        <div className="flex items-center justify-between p-6">
+          {sidebarOpen && (
+            <div className="flex items-center gap-2">
+              <div className="bg-emerald-500 p-1.5 rounded-lg">
+                <Activity size={20} className="text-white" />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight">Dairy Manager</h1>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-md p-2 hover:bg-sky-600/50"
+            className="rounded-lg p-1.5 hover:bg-white/10 text-emerald-100 transition-colors"
           >
-            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
-        <nav className="mt-6 space-y-2 px-2 flex-1">
+        <nav className="mt-4 space-y-1 px-3 flex-1">
           {navItems.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path
             return (
@@ -51,28 +60,29 @@ export function Layout({ children }: { children: ReactNode }) {
                 key={path}
                 to={path}
                 className={[
-                  'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors',
-                  active ? 'bg-white/15 text-white shadow-inner' : 'text-sky-100 hover:bg-sky-600/40 hover:text-white'
+                  'flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200',
+                  active 
+                    ? 'bg-emerald-600/20 text-emerald-300 font-semibold' 
+                    : 'text-emerald-100/70 hover:bg-white/5 hover:text-white'
                 ].join(' ')}
               >
-                <Icon size={18} />
-                {sidebarOpen && <span className="text-sm font-medium">{label}</span>}
+                <Icon size={20} className={active ? 'text-emerald-400' : ''} />
+                {sidebarOpen && <span className="text-sm">{label}</span>}
               </Link>
             )
           })}
         </nav>
 
-        {/* User Profile & Logout Section */}
-        <div className="border-t border-sky-600/50 p-4 space-y-3">
+        <div className="border-t border-white/10 p-4 space-y-3">
           {sidebarOpen && profile && (
-            <div className="text-sm">
-              <p className="font-semibold text-white">{profile.name}</p>
-              <p className="text-xs text-sky-200 capitalize">{profile.role}</p>
+            <div className="px-2">
+              <p className="text-sm font-semibold text-white">{profile.name}</p>
+              <p className="text-xs text-emerald-400 capitalize">{profile.role}</p>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sky-100 hover:bg-red-500/20 hover:text-red-100 transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-emerald-100/70 hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
             <LogOut size={18} />
             {sidebarOpen && <span className="text-sm font-medium">Sign out</span>}
@@ -80,15 +90,14 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <header className="border-b border-slate-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur">
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-600 font-semibold">Farm Operations</p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-800">
-            {navItems.find((item) => item.path === location.pathname)?.label || 'Dairy Farm Manager'}
+       <main className="flex-1 overflow-auto bg-[#ecf5ff]">         <header className="border-b border-slate-200 bg-white px-8 py-5">
+          <p className="text-xs uppercase tracking-widest text-emerald-600 font-bold mb-1">Farm Operations</p>
+          <h2 className="text-2xl font-bold text-slate-800">
+            {navItems.find((item) => item.path === location.pathname)?.label || 'Dashboard'}
           </h2>
         </header>
 
-        <div className="p-6">{children}</div>
+        <div className="p-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>
   )

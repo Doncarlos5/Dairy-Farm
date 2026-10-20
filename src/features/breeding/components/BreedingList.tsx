@@ -108,13 +108,13 @@ export function BreedingList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-sky-600 font-semibold">Reproduction</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">Reproduction</p>
           <h3 className="mt-1 text-3xl font-bold text-slate-900">Breeding records</h3>
         </div>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
         >
           <Plus size={16} /> {showForm ? 'Close' : 'Add record'}
         </button>
@@ -242,7 +242,7 @@ export function BreedingList() {
               </button>
               <button
                 type="submit"
-                className="rounded-xl bg-sky-600 px-4 py-2 text-white hover:bg-sky-700"
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
               >
                 Save record
               </button>

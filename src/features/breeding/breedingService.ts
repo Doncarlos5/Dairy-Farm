@@ -50,3 +50,12 @@ export async function deleteBreedingRecord(id: string): Promise<void> {
   const { error } = await supabase.from('breeding_records').delete().eq('id', id)
   if (error) throw error
 }
+export async function getBreedingForCow(cowId: string): Promise<BreedingRecord[]> {
+  const { data, error } = await supabase
+    .from('breeding_records')
+    .select('*')
+    .eq('cow_id', cowId)
+    .order('ai_date', { ascending: false })
+  if (error) throw error
+  return (data || []).map(mapBreedingRecord)
+}
