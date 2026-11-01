@@ -56,3 +56,27 @@ export async function getCow(id: string): Promise<Cow | null> {
   if (error) return null
   return mapCow(data)
 }
+export async function uploadCowPhoto(file: File, cowId: string): Promise<string> {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${cowId}-${Date.now()}.${fileExt}`
+  
+  // 1. Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from('cow-photos')
+    .upload(fileName, file, { upsert: true })
+
+  if (uploadError) throw uploadError
+
+  // 2. Get the public URL
+  const { data } = supabase.storage.from('cow-photos').getPublicUrl(fileName)
+  
+  // 3. Save URL to the cows table
+  const { error: updateError } = await supabase
+    .from('cows')
+    .update({ photo_url: data.publicUrl })
+    .eq('id', cowId)
+
+  if (updateError) throw updateError
+  
+  return data.publicUrl
+}

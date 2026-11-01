@@ -1,4 +1,3 @@
-import { AlertTriangle } from 'lucide-react'
 import type { Cow } from '../../../lib/schemas'
 
 const statusColors: Record<Cow['status'], string> = {
@@ -18,17 +17,25 @@ const statusLabels: Record<Cow['status'], string> = {
 }
 
 export function CowCard({ cow }: { cow: Cow }) {
-  const underWithdrawal = false // Will be dynamic later
-
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/50 transition-all hover:shadow-md hover:border-emerald-200">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/50 transition-all hover:shadow-md hover:border-orange-200 flex flex-col h-full">
+      
+      {/* Photo Section */}
+      {cow.photo ? (
+        <img src={cow.photo} alt={cow.name} className="w-full h-40 object-cover rounded-2xl mb-4" />
+      ) : (
+        <div className="w-full h-40 bg-slate-50 rounded-2xl mb-4 flex items-center justify-center text-slate-400 text-sm font-medium border border-slate-100 border-dashed">
+          No photo
+        </div>
+      )}
+
+      <div className="flex items-start justify-between gap-3 flex-1">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Cow</p>
           <h3 className="mt-1 text-xl font-bold text-slate-800 truncate">
             {cow.name || 'Unnamed cow'}
           </h3>
-          <p className="text-sm font-medium text-emerald-600 mt-0.5">Tag {cow.tagId}</p>
+          <p className="text-sm font-medium text-orange-600 mt-0.5">Tag {cow.tagId}</p>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0 min-w-[80px]">
           <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusColors[cow.status]}`}>

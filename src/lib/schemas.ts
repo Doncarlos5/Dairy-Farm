@@ -26,10 +26,14 @@ export interface Cow {
   lactationNumber: number
   status: 'in_milk' | 'dry' | 'heifer' | 'calf' | 'culled'
   pregnancyStatus: 'open' | 'bred' | 'confirmed' | 'dry'
-  photo?: Blob
+  photo?: string
   notes?: string
   createdAt: Date
   updatedAt: Date
+  lastCalvedDate?: string
+  calfDetails?: string
+  weight?: number
+  bcs?: number
 }
 
 export interface MilkRecord {
@@ -40,6 +44,7 @@ export interface MilkRecord {
   session: 'am' | 'midday' | 'pm'
   litres: number
   recordedBy: string
+  pendingDeletion?: boolean 
   createdAt: Date
 }
 
@@ -86,6 +91,11 @@ export interface HealthRecord {
   vetName?: string
   cost?: number
   notes?: string
+  // NEW FIELDS:
+  weight?: number
+  bcs?: number
+  temperature?: number
+  vaccination?: string
   createdAt: Date
 }
 
@@ -96,5 +106,26 @@ export interface Note {
   date: string
   text: string
   createdBy: string
+  createdAt: Date
+}
+export interface Sale {
+  id: string
+  farmId: string
+  date: string
+  litres: number
+  pricePerLitre: number
+  total: number
+  buyer?: string
+  notes?: string
+  createdAt: Date
+}
+
+export interface Expense {
+  id: string
+  farmId: string
+  date: string
+  category: string
+  amount: number
+  description?: string
   createdAt: Date
 }

@@ -16,6 +16,10 @@ function mapHealthRecord(row: any): HealthRecord {
     vetName: row.vet_name || undefined,
     cost: row.cost ? Number(row.cost) : undefined,
     notes: row.notes || undefined,
+    weight: row.weight ? Number(row.weight) : undefined,
+    bcs: row.bcs ? Number(row.bcs) : undefined,
+    temperature: row.temperature ? Number(row.temperature) : undefined,
+    vaccination: row.vaccination || undefined,
     createdAt: new Date(row.created_at)
   }
 }
@@ -25,6 +29,17 @@ export async function getAllHealthRecords(farmId: string): Promise<HealthRecord[
     .from('health_records')
     .select('*')
     .eq('farm_id', farmId)
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return (data || []).map(mapHealthRecord)
+}
+
+export async function getHealthForCow(cowId: string): Promise<HealthRecord[]> {
+  const { data, error } = await supabase
+    .from('health_records')
+    .select('*')
+    .eq('cow_id', cowId)
     .order('date', { ascending: false })
 
   if (error) throw error
@@ -44,7 +59,11 @@ export async function addHealthRecord(record: HealthRecord): Promise<void> {
     withdrawal_end_date: record.withdrawalEndDate || null,
     vet_name: record.vetName,
     cost: record.cost,
-    notes: record.notes
+    notes: record.notes,
+    weight: record.weight,
+    bcs: record.bcs,
+    temperature: record.temperature,
+    vaccination: record.vaccination
   })
 
   if (error) throw error
@@ -59,13 +78,4 @@ export function isUnderWithdrawal(record: HealthRecord): boolean {
   if (!record.withdrawalEndDate) return false
   const today = new Date().toISOString().slice(0, 10)
   return record.withdrawalEndDate >= today
-}
-export async function getHealthForCow(cowId: string): Promise<HealthRecord[]> {
-  const { data, error } = await supabase
-    .from('health_records')
-    .select('*')
-    .eq('cow_id', cowId)
-    .order('date', { ascending: false })
-  if (error) throw error
-  return (data || []).map(mapHealthRecord)
 }

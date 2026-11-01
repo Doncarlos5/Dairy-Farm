@@ -39,3 +39,25 @@ a {
 h1, h2, h3, h4, h5, p {
   margin: 0;
 }
+/* Add this to the bottom of src/index.css */
+@media print {
+  aside, header, nav, button, .no-print {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  body, html, #root {
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .print-container {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}

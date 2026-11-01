@@ -2,14 +2,20 @@ import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from '../features/layout/Layout'
 import { Dashboard } from '../features/dashboard/Dashboard'
 import { CowList } from '../features/cows/components/CowList'
+import { CowProfile } from '../features/cows/components/CowProfile'
 import { MilkList } from '../features/milk/components/MilkList'
 import { BreedingList } from '../features/breeding/components/BreedingList'
 import { HealthList } from '../features/health/components/HealthList'
 import { NoteList } from '../features/notes/components/NoteList'
 import { NotFound } from '../features/layout/NotFound'
 import { Login } from '../features/auth/Login'
+import { SignUp } from '../features/auth/SignUp'
 import { ProtectedRoute } from '../features/auth/ProtectedRoute'
-import { CowProfile } from '../features/cows/components/cowProfile'
+import { Chat } from '../features/chat/Chat'
+import { Finances } from '../features/finances/Finances'
+import { About } from '../features/pages/About'
+import { Info } from '../features/pages/Info'
+import { Reports } from '../features/reports/Reports'
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +23,10 @@ export const router = createBrowserRouter([
     element: <Login />
   },
   {
-    // This element wraps the whole app. If no session, it redirects to /login
+    path: '/signup',
+    element: <SignUp />
+  },
+  {
     element: <ProtectedRoute />,
     children: [
       {
@@ -28,7 +37,7 @@ export const router = createBrowserRouter([
         path: '/cows',
         element: <Layout><CowList /></Layout>
       },
-     {
+      {
         path: '/cows/:id',
         element: <Layout><CowProfile /></Layout>
       },
@@ -51,7 +60,27 @@ export const router = createBrowserRouter([
       {
         path: '*',
         element: <Layout><NotFound /></Layout>
-      }
+      },
+      {
+        path: '/chat',
+        element: <Layout><Chat /></Layout>
+      },
+      {
+        path: '/reports',
+        element: <Layout><Reports /></Layout>
+      },
+      {
+        path: '/finances',
+        element: <Layout><Finances /></Layout>
+      },
+            {
+        path: '/about',
+        element: <Layout><About /></Layout>
+      },
+      {
+        path: '/info',
+        element: <Layout><Info /></Layout>
+      },
     ]
   }
 ])

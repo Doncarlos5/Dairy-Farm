@@ -7,6 +7,7 @@ type Profile = {
   farmId: string
   name: string
   role: 'owner' | 'manager' | 'staff'
+  avatarUrl?: string
 }
 
 type AuthContextType = {
@@ -24,14 +25,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 1. Check active session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else setLoading(false)
     })
 
-    // 2. Listen for auth changes (login, logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
@@ -47,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, farm_id, name, role')
+      .select('id, farm_id, name, role, avatar_url')
       .eq('id', userId)
       .single()
 
@@ -56,7 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: data.id,
         farmId: data.farm_id,
         name: data.name,
-        role: data.role
+        role: data.role,
+        avatarUrl: data.avatar_url
       })
     }
     setLoading(false)
