@@ -31,6 +31,30 @@ export async function getAllCows(farmId: string): Promise<Cow[]> {
   return (data || []).map(mapCow)
 }
 
+export async function updateCow(id: string, changes: Partial<Cow>): Promise<void> {
+  const updates: any = {}
+  
+  if (changes.tagId !== undefined) updates.tag_id = changes.tagId
+  if (changes.name !== undefined) updates.name = changes.name
+  if (changes.breed !== undefined) updates.breed = changes.breed
+  if (changes.birthDate !== undefined) updates.birth_date = changes.birthDate
+  if (changes.lactationNumber !== undefined) updates.lactation_number = changes.lactationNumber
+  if (changes.status !== undefined) updates.status = changes.status
+  if (changes.pregnancyStatus !== undefined) updates.pregnancy_status = changes.pregnancyStatus
+  if (changes.notes !== undefined) updates.notes = changes.notes
+  
+  // These are the new fields we added
+  if (changes.lastCalvedDate !== undefined) updates.last_calved_date = changes.lastCalvedDate
+  if (changes.calfDetails !== undefined) updates.calf_details = changes.calfDetails
+  if (changes.weight !== undefined) updates.weight = changes.weight
+  if (changes.bcs !== undefined) updates.bcs = changes.bcs
+
+  updates.updated_at = new Date().toISOString()
+
+  const { error } = await supabase.from('cows').update(updates).eq('id', id)
+  if (error) throw error
+}
+
 export async function addCow(cow: Cow): Promise<void> {
   const { error } = await supabase.from('cows').insert({
     farm_id: cow.farmId,

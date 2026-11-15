@@ -8,6 +8,9 @@ type Profile = {
   name: string
   role: 'owner' | 'manager' | 'staff'
   avatarUrl?: string
+  nationalId?: string
+  phoneNumber?: string
+  workerNumber?: string
 }
 
 type AuthContextType = {
@@ -25,16 +28,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 1. Check active session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (session) fetchProfile(session.user.id)
-      else setLoading(false)
+      if (session) {
+        fetchProfile(session.user.id)
+      } else {
+        setLoading(false)
+      }
     })
 
+    // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) fetchProfile(session.user.id)
-      else {
+      if (session) {
+        fetchProfile(session.user.id)
+      } else {
         setProfile(null)
         setLoading(false)
       }
@@ -44,22 +53,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, farm_id, name, role, avatar_url')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, farm_id, name, role, avatar_url, national_id, phone_number, worker_number')
+        .eq('id', userId)
+        .single()
 
-    if (!error && data) {
-      setProfile({
-        id: data.id,
-        farmId: data.farm_id,
-        name: data.name,
-        role: data.role,
-        avatarUrl: data.avatar_url
-      })
+      if (error) {
+        console.error("❌ ERROR FETCHING PROFILE:", error.message)
+        // If the profile is missing (e.g. right after a password reset), we still need to stop loading
+      } else if (data) {
+        setProfile({
+          id: data.id,
+          farmId: data.farm_id,
+          name: data.name,
+          role: data.role,
+          avatarUrl: data.avatar_url,
+          nationalId: data.national_id,
+          phoneNumber: data.phone_number,
+          workerNumber: data.worker_number
+        })
+      }
+    } catch (err) {
+      console.error("❌ CRITICAL PROFILE ERROR:", err)
+    } finally {
+      // THIS IS THE MOST IMPORTANT LINE. It guarantees the app stops loading.
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const signOut = async () => {

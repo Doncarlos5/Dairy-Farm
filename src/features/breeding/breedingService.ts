@@ -14,6 +14,7 @@ function mapBreedingRecord(row: any): BreedingRecord {
     pregnancyCheckDate: row.pregnancy_check_date || '',
     pregnancyConfirmed: row.pregnancy_confirmed,
     notes: row.notes || undefined,
+    status: row.status as any,
     createdAt: new Date(row.created_at)
   }
 }
@@ -23,6 +24,17 @@ export async function getAllBreedingRecords(farmId: string): Promise<BreedingRec
     .from('breeding_records')
     .select('*')
     .eq('farm_id', farmId)
+    .order('ai_date', { ascending: false })
+
+  if (error) throw error
+  return (data || []).map(mapBreedingRecord)
+}
+
+export async function getBreedingForCow(cowId: string): Promise<BreedingRecord[]> {
+  const { data, error } = await supabase
+    .from('breeding_records')
+    .select('*')
+    .eq('cow_id', cowId)
     .order('ai_date', { ascending: false })
 
   if (error) throw error
@@ -40,7 +52,8 @@ export async function addBreedingRecord(record: BreedingRecord): Promise<void> {
     expected_calving_date: record.expectedCalvingDate || null,
     pregnancy_check_date: record.pregnancyCheckDate || null,
     pregnancy_confirmed: record.pregnancyConfirmed,
-    notes: record.notes
+    notes: record.notes,
+    status: 'active'
   })
 
   if (error) throw error
@@ -50,12 +63,12 @@ export async function deleteBreedingRecord(id: string): Promise<void> {
   const { error } = await supabase.from('breeding_records').delete().eq('id', id)
   if (error) throw error
 }
-export async function getBreedingForCow(cowId: string): Promise<BreedingRecord[]> {
-  const { data, error } = await supabase
+
+// NEW: Archive the record when the cow calves
+export async function markBreedingRecordCalved(id: string): Promise<void> {
+  const { error } = await supabase
     .from('breeding_records')
-    .select('*')
-    .eq('cow_id', cowId)
-    .order('ai_date', { ascending: false })
+    .update({ status: 'calved' })
+    .eq('id', id)
   if (error) throw error
-  return (data || []).map(mapBreedingRecord)
 }

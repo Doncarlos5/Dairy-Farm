@@ -76,6 +76,12 @@ export function Login() {
             {loading ? 'Logging in...' : 'Sign in'}
           </button>
         </form>
+
+        <div className="text-center text-sm text-slate-500">
+          <Link to="/forgot-password" className="font-semibold text-orange-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         
         <div className="text-center text-sm text-slate-500">
           Don't have an account?{' '}

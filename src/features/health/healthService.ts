@@ -20,6 +20,7 @@ function mapHealthRecord(row: any): HealthRecord {
     bcs: row.bcs ? Number(row.bcs) : undefined,
     temperature: row.temperature ? Number(row.temperature) : undefined,
     vaccination: row.vaccination || undefined,
+    recordedBy: row.recorded_by || undefined, // <--- ADD THIS
     createdAt: new Date(row.created_at)
   }
 }
@@ -63,7 +64,8 @@ export async function addHealthRecord(record: HealthRecord): Promise<void> {
     weight: record.weight,
     bcs: record.bcs,
     temperature: record.temperature,
-    vaccination: record.vaccination
+    vaccination: record.vaccination,
+    recorded_by: record.recordedBy, // <--- ADD THIS
   })
 
   if (error) throw error

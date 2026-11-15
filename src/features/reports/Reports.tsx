@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { 
-  FileText, Droplets, Activity, HeartPulse, Coins, ArrowLeft, Printer, TrendingUp, AlertTriangle 
+import {  Droplets, Activity, HeartPulse, Coins, ArrowLeft, Printer, AlertTriangle 
 } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Cow, MilkRecord, HealthRecord, BreedingRecord, Sale, Expense } from '../../lib/schemas'
 import { Card } from '../../components/Card'
 import { useAuth } from '../auth/AuthContext'

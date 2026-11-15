@@ -16,11 +16,18 @@ import { Finances } from '../features/finances/Finances'
 import { About } from '../features/pages/About'
 import { Info } from '../features/pages/Info'
 import { Reports } from '../features/reports/Reports'
+import { FeedList } from '../features/feed/feedList'
+import { Settings } from '../features/auth/Settings'
+import { ForgotPassword } from '../features/auth/ForgotPassword'
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />
+  },
+  {
+    path: '/forgot-password', // 
+    element: <ForgotPassword />
   },
   {
     path: '/signup',
@@ -80,6 +87,14 @@ export const router = createBrowserRouter([
       {
         path: '/info',
         element: <Layout><Info /></Layout>
+      },
+      {
+        path: '/feed',
+        element: <Layout><FeedList /></Layout>
+      },
+      {
+        path: '/Settings',
+        element: <Layout><Settings /></Layout>
       },
     ]
   }

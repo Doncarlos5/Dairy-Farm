@@ -14,6 +14,9 @@ export interface User {
   pinHash: string
   active: boolean
   createdAt: Date
+  nationalId?: string
+  phoneNumber?: string
+  workerNumber?: string
 }
 
 export interface Cow {
@@ -32,6 +35,7 @@ export interface Cow {
   updatedAt: Date
   lastCalvedDate?: string
   calfDetails?: string
+  dryOffDate?: string
   weight?: number
   bcs?: number
 }
@@ -60,6 +64,7 @@ export interface BreedingRecord {
   pregnancyCheckDate: string
   pregnancyConfirmed: boolean
   notes?: string
+   status?: 'active' | 'calved' | 'failed'
   createdAt: Date
 }
 
@@ -96,6 +101,7 @@ export interface HealthRecord {
   bcs?: number
   temperature?: number
   vaccination?: string
+   recordedBy?: string
   createdAt: Date
 }
 
@@ -117,7 +123,9 @@ export interface Sale {
   total: number
   buyer?: string
   notes?: string
+  status: 'pending' | 'approved' | 'rejected'
   createdAt: Date
+  createdByName?: string
 }
 
 export interface Expense {
@@ -127,5 +135,23 @@ export interface Expense {
   category: string
   amount: number
   description?: string
+  status: 'pending' | 'approved' | 'rejected'
+  feedItemId?: string
+  quantityAdded?: number
+  createdByName?: string     // <-- ADD
+  createdAt: Date
+  statusUpdatedAt?: Date     // <-- ADD
+}
+
+export interface FeedItem {
+  id: string
+  farmId: string
+  name: string
+  category: string
+  quantity: number
+  unit: string
+  reorderLevel: number
+  costPerUnit: number
+  lastRestocked?: string
   createdAt: Date
 }
