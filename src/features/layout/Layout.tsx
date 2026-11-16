@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Users, Droplets, Activity, HeartPulse, FileText, LogOut, Coins, MessageSquare, Info, HelpCircle, FileBarChart, Settings as SettingsIcon, MoreHorizontal } from 'lucide-react'
+import { Home, Users, Droplets, Activity, HeartPulse, FileText, LogOut, Coins, MessageSquare, Info, HelpCircle, FileBarChart, Settings as SettingsIcon, Baby, Package } from 'lucide-react'
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -7,19 +7,20 @@ import { supabase } from '../../lib/supabase'
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Home },
   { path: '/cows', label: 'Cows', icon: Users },
+  { path: '/calves', label: 'Calves', icon: Baby }, // <-- ADDED
   { path: '/milk', label: 'Milk', icon: Droplets },
   { path: '/breeding', label: 'Breeding', icon: Activity },
   { path: '/health', label: 'Health', icon: HeartPulse },
   { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/chat', label: 'Chat', icon: MessageSquare, isChat: true },
   { path: '/reports', label: 'Reports', icon: FileBarChart },
-  { path: '/feed', label: 'Feed & Stock', icon: Activity },
+  { path: '/feed', label: 'Feed & Stock', icon: Package },
   { path: '/finances', label: 'Finances', icon: Coins, ownerOnly: true },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false) // NEW: Mobile more menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hasUnreadChat, setHasUnreadChat] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   
@@ -28,7 +29,6 @@ export function Layout({ children }: { children: ReactNode }) {
   const { profile, signOut } = useAuth()
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Close user dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -39,12 +39,10 @@ export function Layout({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [location.pathname])
 
-  // Real-time chat notifications
   useEffect(() => {
     if (!profile?.farmId) return
     const channel = supabase
@@ -77,16 +75,16 @@ export function Layout({ children }: { children: ReactNode }) {
     return true
   })
 
-  const initials = profile?.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
-
   // Split items for mobile: first 4 go to bottom bar, rest go to "More"
   const mobileBottomItems = visibleNavItems.slice(0, 4)
   const mobileMoreItems = visibleNavItems.slice(4)
 
+  const initials = profile?.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#fdf6f0] font-sans">
       
-      {/* --- DESKTOP SIDEBAR (HOVER TO EXPAND) --- */}
+      {/* DESKTOP SIDEBAR */}
       <aside
         onMouseEnter={() => setSidebarOpen(true)}
         onMouseLeave={() => setSidebarOpen(false)}
@@ -138,9 +136,8 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </aside>
 
-      {/* --- MAIN CONTENT --- */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        
         <header className="border-b border-slate-200 bg-white px-4 md:px-8 py-4 md:py-5 shrink-0 relative z-20">
           <div className="flex justify-between items-center w-full">
             <div>
@@ -150,7 +147,6 @@ export function Layout({ children }: { children: ReactNode }) {
               </h2>
             </div>
             
-            {/* User Profile Dropdown */}
             <div className="relative" ref={menuRef}>
               <button 
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -203,7 +199,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      {/* --- MOBILE BOTTOM NAVIGATION --- */}
+      {/* MOBILE BOTTOM NAVIGATION */}
       <nav className="md:hidden fixed bottom-0 w-full bg-[#0a2e23] border-t border-white/10 flex justify-around items-center px-2 py-3 z-40">
         {mobileBottomItems.map(({ path, label, icon: Icon, isChat }) => {
           const active = location.pathname === path
@@ -220,22 +216,18 @@ export function Layout({ children }: { children: ReactNode }) {
           )
         })}
         
-        {/* The "More" Button */}
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-1 p-2 relative w-16 text-slate-400"
-        >
-          <MoreHorizontal size={22} />
+        <button onClick={() => setMobileMenuOpen(true)} className="flex flex-col items-center gap-1 p-2 relative w-16 text-slate-400">
+          <MoreHorizontalIcon />
           <span className="text-[10px] font-medium">More</span>
         </button>
       </nav>
 
-      {/* --- MOBILE "MORE" MENU OVERLAY --- */}
+      {/* MOBILE "MORE" MENU OVERLAY */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setMobileMenuOpen(false)}>
           <div 
             className="absolute bottom-0 w-full bg-white rounded-t-[2rem] p-6 pb-12 animate-in slide-in-from-bottom duration-300"
-            onClick={e => e.stopPropagation()} // Prevent clicks inside from closing it
+            onClick={e => e.stopPropagation()}
           >
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
             <h3 className="text-xl font-bold text-slate-800 mb-6 px-2">All Modules</h3>
@@ -262,10 +254,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="mt-8 border-t border-slate-100 pt-6">
-              <button 
-                onClick={handleLogout} 
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-100"
-              >
+              <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-100">
                 <LogOut size={18} /> Sign Out
               </button>
             </div>
@@ -274,5 +263,14 @@ export function Layout({ children }: { children: ReactNode }) {
       )}
 
     </div>
+  )
+}
+
+// Quick inline component for the More icon since it wasn't imported
+function MoreHorizontalIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+    </svg>
   )
 }

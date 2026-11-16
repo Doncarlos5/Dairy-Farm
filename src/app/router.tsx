@@ -19,6 +19,7 @@ import { Reports } from '../features/reports/Reports'
 import { FeedList } from '../features/feed/feedList'
 import { Settings } from '../features/auth/Settings'
 import { ForgotPassword } from '../features/auth/ForgotPassword'
+import { CalvesList } from '../features/calves/CalvesList'
 
 export const router = createBrowserRouter([
   {
@@ -95,6 +96,10 @@ export const router = createBrowserRouter([
       {
         path: '/Settings',
         element: <Layout><Settings /></Layout>
+      },
+       {
+        path: '/calves',
+        element: <Layout><CalvesList /></Layout>
       },
     ]
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {  Droplets, Activity, HeartPulse, Coins, ArrowLeft, Printer, AlertTriangle 
+import {  Droplets, Activity, HeartPulse, Coins, ArrowLeft, Printer, AlertTriangle, Package, Baby
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import type { Cow, MilkRecord, HealthRecord, BreedingRecord, Sale, Expense } from '../../lib/schemas'
@@ -10,13 +10,14 @@ import { getAllMilkRecords } from '../milk/milkService'
 import { getAllHealthRecords, isUnderWithdrawal } from '../health/healthService'
 import { getAllBreedingRecords } from '../breeding/breedingService'
 import { getAllSales, getAllExpenses } from '../finances/financeService'
+import { getAllFeed } from '../feed/feedService'
 
 export function Reports() {
   const { profile } = useAuth()
   const farmId = profile?.farmId || ''
   const isOwner = profile?.role === 'owner' || profile?.role === 'manager'
 
-  const [activeReport, setActiveReport] = useState<'hub' | 'milk' | 'health' | 'breeding' | 'financial'>('hub')
+  const [activeReport, setActiveReport] = useState<'hub' | 'milk' | 'health' | 'breeding' | 'financial' | 'feed' | 'calves'>('hub')
   const [loading, setLoading] = useState(true)
 
   // Data State
@@ -24,28 +25,33 @@ export function Reports() {
   const [milk, setMilk] = useState<MilkRecord[]>([])
   const [health, setHealth] = useState<HealthRecord[]>([])
   const [breeding, setBreeding] = useState<BreedingRecord[]>([])
-  const [sales, setSales] = useState<Sale[]>([])
+    const [sales, setSales] = useState<Sale[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [feed, setFeed] = useState<any[]>([])
 
-  useEffect(() => {
+   useEffect(() => {
     async function loadData() {
       if (!farmId) return
       try {
         setLoading(true)
-        const [cowsData, milkData, healthData, breedingData, salesData, expensesData] = await Promise.all([
+        const [cowsData, milkData, healthData, breedingData, salesData, expensesData, feedData] = await Promise.all([
           getAllCows(farmId),
           getAllMilkRecords(farmId),
           getAllHealthRecords(farmId),
           getAllBreedingRecords(farmId),
           isOwner ? getAllSales(farmId) : Promise.resolve([]),
-          isOwner ? getAllExpenses(farmId) : Promise.resolve([])
+          isOwner ? getAllExpenses(farmId) : Promise.resolve([]),
+          getAllFeed(farmId)
         ])
+        
         setCows(cowsData)
         setMilk(milkData)
         setHealth(healthData)
-        setBreeding(breedingData)
-        setSales(salesData)
-        setExpenses(expensesData)
+        setBreeding(breedingData) // Now correctly gets BreedingRecord[]
+        setSales(salesData)       // Now correctly gets Sale[]
+        setExpenses(expensesData) // Now correctly gets Expense[]
+        setFeed(feedData || [])   // Now correctly gets FeedItem[]
+        
       } catch (err) {
         console.error('Failed to load reports:', err)
       } finally {
@@ -124,6 +130,17 @@ export function Reports() {
               <p className="text-sm text-slate-500 mt-2">Income vs expenses and net profit.</p>
             </Card>
           )}
+            <Card className="p-6 flex flex-col items-center text-center hover:border-orange-300 hover:shadow-md transition-all cursor-pointer" onClick={() => setActiveReport('feed')}>
+              <div className="bg-amber-100 p-4 rounded-full mb-4 text-amber-600"><Package size={32} /></div>
+              <h4 className="text-lg font-bold text-slate-800">Feed & Inventory</h4>
+              <p className="text-sm text-slate-500 mt-2">Stock levels, low inventory alerts, and valuation.</p>
+            </Card>
+
+          <Card className="p-6 flex flex-col items-center text-center hover:border-orange-300 hover:shadow-md transition-all cursor-pointer" onClick={() => setActiveReport('calves')}>
+            <div className="bg-teal-100 p-4 rounded-full mb-4 text-teal-600"><Baby size={32} /></div>
+            <h4 className="text-lg font-bold text-slate-800">Young Stock</h4>
+            <p className="text-sm text-slate-500 mt-2">Calves list, ages, and mother lineage.</p>
+          </Card>
         </div>
       </div>
     )
@@ -334,6 +351,103 @@ export function Reports() {
                       <td className="py-2 text-right font-bold text-emerald-600">+ KSH {s.total}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+                {/* FEED REPORT */}
+        {activeReport === 'feed' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-sm text-slate-500 font-medium">Total Items</p>
+                <p className="text-3xl font-bold text-slate-800">{feed.length}</p>
+              </div>
+              <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                <p className="text-sm text-red-700 font-medium">Low Stock Alerts</p>
+                <p className="text-3xl font-bold text-red-900">
+                  {feed.filter(f => f.quantity <= f.reorderLevel).length}
+                </p>
+              </div>
+              <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <p className="text-sm text-emerald-700 font-medium">Inventory Value</p>
+                <p className="text-3xl font-bold text-emerald-900">
+                  KSH {feed.reduce((sum, item) => sum + (item.quantity * item.costPerUnit), 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Current Inventory Levels</h3>
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-2">Item</th>
+                    <th className="py-2">Category</th>
+                    <th className="py-2 text-right">Stock Level</th>
+                    <th className="py-2 text-right">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feed.map((item) => (
+                    <tr key={item.id} className="border-b border-slate-100">
+                      <td className="py-2 font-medium">{item.name}</td>
+                      <td className="py-2">{item.category}</td>
+                      <td className={`py-2 text-right font-bold ${item.quantity <= item.reorderLevel ? 'text-red-600' : 'text-slate-700'}`}>
+                        {item.quantity} {item.unit}
+                      </td>
+                      <td className="py-2 text-right font-medium">KSH {(item.quantity * item.costPerUnit).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* CALVES REPORT */}
+        {activeReport === 'calves' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                <p className="text-sm text-teal-700 font-medium">Total Calves</p>
+                <p className="text-3xl font-bold text-teal-900">
+                  {cows.filter(c => c.status === 'calf').length}
+                </p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-sm text-slate-500 font-medium">Heifers vs Bulls</p>
+                <p className="text-lg font-bold text-slate-800 mt-2">
+                  {/* Assuming you don't track sex directly in Cow schema yet, we'll just show the total for now */}
+                  {cows.filter(c => c.status === 'calf').length} Active
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Calf Lineage</h3>
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-2">Calf Tag</th>
+                    <th className="py-2">Breed</th>
+                    <th className="py-2">Mother</th>
+                    <th className="py-2">Birth Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cows.filter(c => c.status === 'calf').map((calf) => {
+                    const mother = cows.find(c => c.id === calf.motherId)
+                    return (
+                      <tr key={calf.id} className="border-b border-slate-100">
+                        <td className="py-2 font-bold text-orange-600">#{calf.tagId}</td>
+                        <td className="py-2">{calf.breed}</td>
+                        <td className="py-2 font-medium">{mother ? (mother.name || mother.tagId) : 'Unlinked'}</td>
+                        <td className="py-2">{calf.birthDate}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

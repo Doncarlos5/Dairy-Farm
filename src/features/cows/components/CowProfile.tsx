@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Edit, Camera, Calendar, Activity, HeartPulse, Milk, TrendingUp, TrendingDown, Minus, X } from 'lucide-react'
+import { ArrowLeft, Edit, Camera, Calendar, Activity, HeartPulse, Milk, TrendingUp, TrendingDown, Minus, X, Baby, Plus } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import type { Cow, MilkRecord, BreedingRecord, HealthRecord } from '../../../lib/schemas'
 import { Card } from '../../../components/Card'
@@ -8,6 +8,7 @@ import { getCow, uploadCowPhoto, updateCow } from '../cowService'
 import { getMilkForCow } from '../../milk/milkService'
 import { getBreedingForCow } from '../../breeding/breedingService'
 import { getHealthForCow, isUnderWithdrawal } from '../../health/healthService'
+import { supabase } from '../../../lib/supabase'
 
 export function CowProfile() {
   const { id } = useParams<{ id: string }>()
@@ -16,6 +17,7 @@ export function CowProfile() {
   const [milk, setMilk] = useState<MilkRecord[]>([])
   const [breeding, setBreeding] = useState<BreedingRecord[]>([])
   const [health, setHealth] = useState<HealthRecord[]>([])
+  const [motherCalves, setMotherCalves] = useState<Cow[]>([]) 
   
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'milk' | 'breeding' | 'health'>('overview')
@@ -24,12 +26,11 @@ export function CowProfile() {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // NEW: Edit State
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     tagId: '', name: '', breed: 'Friesian' as Cow['breed'], birthDate: '',
     lactationNumber: 1, status: 'in_milk' as Cow['status'], pregnancyStatus: 'open' as Cow['pregnancyStatus'],
-    lastCalvedDate: '', calfDetails: '', weight: '', bcs: '', notes: ''
+    lastCalvedDate: '', calfDetails: '', weight: '', bcs: '', notes: '', motherId: ''
   })
 
   useEffect(() => {
@@ -37,27 +38,32 @@ export function CowProfile() {
       if (!id) return
       try {
         setLoading(true)
-        const [cowData, milkData, breedingData, healthData] = await Promise.all([
+        
+        const [cowData, milkData, breedingData, healthData, calvesData] = await Promise.all([
           getCow(id),
           getMilkForCow(id),
           getBreedingForCow(id),
-          getHealthForCow(id)
+          getHealthForCow(id),
+          supabase.from('cows').select('*').eq('mother_id', id)
         ])
+        
         if (cowData) {
           setCow(cowData)
-          // Populate the edit form with current data
           setEditForm({
             tagId: cowData.tagId, name: cowData.name || '', breed: cowData.breed,
             birthDate: cowData.birthDate || '', lactationNumber: cowData.lactationNumber,
             status: cowData.status, pregnancyStatus: cowData.pregnancyStatus,
             lastCalvedDate: cowData.lastCalvedDate || '', calfDetails: cowData.calfDetails || '',
             weight: cowData.weight?.toString() || '', bcs: cowData.bcs?.toString() || '',
-            notes: cowData.notes || ''
+            notes: cowData.notes || '', motherId: cowData.motherId || ''
           })
         }
+        
         setMilk(milkData)
         setBreeding(breedingData)
         setHealth(healthData)
+        if (calvesData.data) setMotherCalves(calvesData.data)
+        
       } catch (err) {
         console.error('Error loading cow profile:', err)
       } finally {
@@ -99,10 +105,10 @@ export function CowProfile() {
         calfDetails: editForm.calfDetails || undefined,
         weight: editForm.weight ? Number(editForm.weight) : undefined,
         bcs: editForm.bcs ? Number(editForm.bcs) : undefined,
-        notes: editForm.notes || undefined
+        notes: editForm.notes || undefined,
+        motherId: editForm.motherId || undefined
       })
       
-      // Update local state to reflect changes instantly
       if (cow) {
         setCow({
           ...cow,
@@ -117,20 +123,21 @@ export function CowProfile() {
           calfDetails: editForm.calfDetails || undefined,
           weight: editForm.weight ? Number(editForm.weight) : undefined,
           bcs: editForm.bcs ? Number(editForm.bcs) : undefined,
-          notes: editForm.notes || undefined
+          notes: editForm.notes || undefined,
+          motherId: editForm.motherId || undefined
         })
       }
       setIsEditing(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      alert('Failed to update cow profile.')
+      if (err.code === '23505') alert(`Error: Tag ID "${editForm.tagId}" is already in use by another cow.`)
+      else alert('Failed to update cow profile.')
     }
   }
 
   if (loading) return <div className="p-8 text-slate-500">Loading profile...</div>
   if (!cow) return <div className="p-8 text-slate-500">Cow not found.</div>
 
-  // --- CALCULATIONS ---
   const today = new Date()
   
   let age = 'Unknown'
@@ -185,7 +192,6 @@ export function CowProfile() {
         <ArrowLeft size={16} /> Back to herd
       </Link>
 
-      {/* --- HERO SECTION --- */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200">
         <div className="h-64 md:h-80 bg-slate-100 relative group">
           {cow.photo ? (
@@ -209,7 +215,6 @@ export function CowProfile() {
                <span className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold text-emerald-700 capitalize">
                  {cow.status.replace('_', ' ')}
                </span>
-               {/* NEW: Edit Button triggers modal */}
                <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors">
                  <Edit size={16} /> Edit
                </button>
@@ -237,16 +242,13 @@ export function CowProfile() {
         </div>
       </div>
 
-      {/* --- TABS --- */}
       <div className="flex overflow-x-auto border-b border-slate-200 sticky top-0 bg-[#fdf6f0] z-10 pt-2">
         {['overview', 'milk', 'breeding', 'health'].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-6 py-3 text-sm font-bold border-b-2 capitalize transition-colors whitespace-nowrap ${activeTab === tab ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{tab}</button>
         ))}
       </div>
 
-      {/* --- TAB CONTENT --- */}
       <div className="pt-2">
-        {/* ... (Existing Overview, Milk, Breeding, Health Tab content remains exactly the same) ... */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
@@ -306,6 +308,26 @@ export function CowProfile() {
                 <p className="text-xs text-slate-400 mt-1">Last calving</p>
               </Card>
             </div>
+
+            {/* UPDATED CALVES CARD WITH BUTTONS */}
+            <Card className="p-6 border-l-4 border-l-orange-400">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <Baby size={20} className="text-orange-500" /> Calves
+                </h3>
+                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-full">{motherCalves.length} Recorded</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link to={`/calves?mother=${cow.id}`} className="inline-flex items-center gap-2 text-sm font-bold text-slate-700 bg-slate-100 px-4 py-2 rounded-xl hover:bg-slate-200 transition-colors">
+                  View All Calves
+                </Link>
+                <Link to={`/cows?addCalf=${cow.id}`} className="inline-flex items-center gap-2 text-sm font-bold text-orange-600 bg-orange-50 px-4 py-2 rounded-xl hover:bg-orange-100 transition-colors border border-orange-200">
+                  <Plus size={16} /> Add New Calf
+                </Link>
+              </div>
+            </Card>
+
             <Card className="p-6">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">Farm Notes</h3>
               <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">{cow.notes || 'No general notes recorded for this cow.'}</p>
@@ -380,18 +402,13 @@ export function CowProfile() {
         )}
       </div>
 
-      {/* --- NEW: EDIT PROFILE MODAL --- */}
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col">
-            
             <div className="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h2 className="text-xl font-bold text-slate-800">Edit Cow Profile</h2>
-              <button onClick={() => setIsEditing(false)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
-                <X size={20} />
-              </button>
+              <button onClick={() => setIsEditing(false)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X size={20} /></button>
             </div>
-
             <form onSubmit={handleSaveEdit} className="p-6 space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Tag ID</span><input value={editForm.tagId} onChange={(e) => setEditForm({ ...editForm, tagId: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" required /></label>
@@ -399,25 +416,18 @@ export function CowProfile() {
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Breed</span><select value={editForm.breed} onChange={(e) => setEditForm({ ...editForm, breed: e.target.value as Cow['breed'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2"><option value="Friesian">Friesian</option><option value="Ayrshire">Ayrshire</option><option value="Jersey">Jersey</option><option value="Cross">Cross</option></select></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Birth Date</span><input type="date" value={editForm.birthDate} onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
               </div>
-
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid gap-4 md:grid-cols-3">
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Status</span><select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Cow['status'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2"><option value="in_milk">In milk</option><option value="dry">Dry</option><option value="heifer">Heifer</option><option value="calf">Calf</option><option value="culled">Culled</option></select></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Pregnancy</span><select value={editForm.pregnancyStatus} onChange={(e) => setEditForm({ ...editForm, pregnancyStatus: e.target.value as Cow['pregnancyStatus'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2"><option value="open">Open</option><option value="bred">Bred</option><option value="confirmed">Confirmed</option><option value="dry">Dry</option></select></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Lactation #</span><input type="number" value={editForm.lactationNumber} onChange={(e) => setEditForm({ ...editForm, lactationNumber: Number(e.target.value) || 1 })} className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
               </div>
-
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Last Calved Date</span><input type="date" value={editForm.lastCalvedDate} onChange={(e) => setEditForm({ ...editForm, lastCalvedDate: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Calf Details</span><input value={editForm.calfDetails} onChange={(e) => setEditForm({ ...editForm, calfDetails: e.target.value })} placeholder="e.g. Female (B001)" className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Weight (kg)</span><input type="number" value={editForm.weight} onChange={(e) => setEditForm({ ...editForm, weight: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
                 <label className="text-sm text-slate-700"><span className="mb-1 block font-medium">Body Condition (1-5)</span><input type="number" step="0.25" value={editForm.bcs} onChange={(e) => setEditForm({ ...editForm, bcs: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
               </div>
-
-              <label className="text-sm text-slate-700 block">
-                <span className="mb-1 block font-medium">Notes</span>
-                <textarea value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className="min-h-[80px] w-full rounded-xl border border-slate-300 px-3 py-2" />
-              </label>
-
+              <label className="text-sm text-slate-700 block"><span className="mb-1 block font-medium">Notes</span><textarea value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className="min-h-[80px] w-full rounded-xl border border-slate-300 px-3 py-2" /></label>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button type="button" onClick={() => setIsEditing(false)} className="rounded-xl border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50 font-medium">Cancel</button>
                 <button type="submit" className="rounded-xl bg-orange-600 px-6 py-2 text-white hover:bg-orange-700 font-medium">Save Changes</button>

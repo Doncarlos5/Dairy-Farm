@@ -26,6 +26,7 @@ export interface Cow {
   name?: string
   breed: 'Friesian' | 'Ayrshire' | 'Jersey' | 'Cross'
   birthDate: string
+    motherId?: string
   lactationNumber: number
   status: 'in_milk' | 'dry' | 'heifer' | 'calf' | 'culled'
   pregnancyStatus: 'open' | 'bred' | 'confirmed' | 'dry'
@@ -153,5 +154,20 @@ export interface FeedItem {
   reorderLevel: number
   costPerUnit: number
   lastRestocked?: string
+  createdAt: Date
+}
+
+export interface FeedAudit {
+  id: string
+  farmId: string
+  date: string
+  auditorName: string
+  details: {
+    itemName: string
+    expected: number
+    physical: number
+    variance: number
+    unit: string
+  }[]
   createdAt: Date
 }

@@ -1,27 +1,38 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, Trash2, Activity } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Plus, Trash2, Baby, Activity } from 'lucide-react'
 import type { Cow } from '../../../lib/schemas'
 import { Card } from '../../../components/Card'
 import { CowCard } from './CowCard'
 import { getAllCows, addCow, deleteCow } from '../cowService'
-import { addHealthRecord } from '../../health/healthService'
+import { addHealthRecord } from '../../health/healthService' // <-- RESTORED
 import { useAuth } from '../../auth/AuthContext'
 
 export function CowList() {
   const { profile } = useAuth()
   const farmId = profile?.farmId || ''
+  const [searchParams] = useSearchParams()
 
   const [cows, setCows] = useState<Cow[]>([])
   const [loading, setLoading] = useState(true)
   const [openForm, setOpenForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // RESTORED: weight, bcs, temperature
   const [form, setForm] = useState({
     tagId: '', name: '', breed: 'Friesian' as Cow['breed'], birthDate: '',
-    lactationNumber: 1, status: 'in_milk' as Cow['status'], pregnancyStatus: 'open' as Cow['pregnancyStatus'], notes: '',
+    lactationNumber: 1, status: 'in_milk' as Cow['status'], pregnancyStatus: 'open' as Cow['pregnancyStatus'], 
+    notes: '', motherId: '',
     weight: '', bcs: '', temperature: ''
   })
+
+  useEffect(() => {
+    const addCalfParam = searchParams.get('addCalf')
+    if (addCalfParam) {
+      setForm(prev => ({ ...prev, status: 'calf', motherId: addCalfParam }))
+      setOpenForm(true)
+    }
+  }, [searchParams])
 
   const fetchCows = async () => {
     if (!farmId) return
@@ -42,10 +53,16 @@ export function CowList() {
     event.preventDefault()
     if (!form.tagId || !farmId) return
 
+    const isDuplicate = cows.some(c => c.tagId.toLowerCase() === form.tagId.toLowerCase())
+    if (isDuplicate) {
+      alert(`Error: A cow with Tag ID "${form.tagId}" already exists.`)
+      return
+    }
+
     try {
       const newCowId = crypto.randomUUID()
 
-      // 1. Create the Cow (This is the critical part)
+      // 1. Create the Cow
       await addCow({
         id: newCowId, 
         farmId,
@@ -57,11 +74,12 @@ export function CowList() {
         status: form.status,
         pregnancyStatus: form.pregnancyStatus,
         notes: form.notes || undefined,
+        motherId: form.motherId || undefined,
         createdAt: new Date(),
         updatedAt: new Date()
       })
 
-      // 2. Try to save vitals separately so it doesn't break the cow creation
+      // 2. RESTORED: Save Initial Vitals as a Health Record
       if (form.weight || form.bcs || form.temperature) {
         try {
           await addHealthRecord({
@@ -82,26 +100,30 @@ export function CowList() {
           })
         } catch (healthErr) {
           console.error('Cow saved, but vitals failed:', healthErr)
-          alert('Cow added successfully, but failed to save initial vitals. Check console.')
+          alert('Cow added successfully, but failed to save initial vitals.')
         }
       }
 
-      // Reset and close
       setForm({
         tagId: '', name: '', breed: 'Friesian', birthDate: '',
         lactationNumber: 1, status: 'in_milk', pregnancyStatus: 'open', notes: '',
-        weight: '', bcs: '', temperature: ''
+        motherId: '', weight: '', bcs: '', temperature: ''
       })
       setOpenForm(false)
       fetchCows()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding cow:', err)
-      alert('Failed to add cow. Check the browser console.')
+      if (err.code === '23505') {
+        alert(`Error: Tag ID "${form.tagId}" is already in use.`)
+      } else {
+        alert('Failed to add cow. Check the browser console.')
+      }
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Delete this cow?')) {
+    const cowName = cows.find(c => c.id === id)?.name || 'this cow'
+    if (window.confirm(`Are you sure you want to delete ${cowName}?\n\nWARNING: This will also permanently delete all of her milk, health, and breeding records. This cannot be undone.`)) {
       try {
         await deleteCow(id)
         fetchCows()
@@ -116,7 +138,9 @@ export function CowList() {
     c.tagId.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  if (loading) return <div className="p-8 text-slate-500">Loading cows from cloud...</div>
+  const potentialMothers = cows.filter(c => c.status !== 'calf')
+
+  if (loading) return <div className="p-8 text-slate-500">Loading cows...</div>
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -149,6 +173,7 @@ export function CowList() {
           <h4 className="text-lg font-bold text-slate-800 mb-6">New cow profile</h4>
           <form onSubmit={handleSubmit} className="space-y-6">
             
+            {/* CORE DETAILS */}
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-sm text-slate-700">
                 <span className="mb-1 block font-medium">Tag ID</span>
@@ -171,13 +196,13 @@ export function CowList() {
                 <span className="mb-1 block font-medium">Birth date</span>
                 <input type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2" />
               </label>
-              <label className="text-sm text-slate-700">
-                <span className="mb-1 block font-medium">Lactation number</span>
-                <input type="number" value={form.lactationNumber} onChange={(e) => setForm({ ...form, lactationNumber: Number(e.target.value) || 1 })} className="w-full rounded-xl border border-slate-300 px-3 py-2" />
-              </label>
+            </div>
+
+            {/* STATUS & REPRODUCTION */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid gap-4 md:grid-cols-3">
               <label className="text-sm text-slate-700">
                 <span className="mb-1 block font-medium">Status</span>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Cow['status'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2">
+                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Cow['status'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white">
                   <option value="in_milk">In milk</option>
                   <option value="dry">Dry</option>
                   <option value="heifer">Heifer</option>
@@ -185,33 +210,64 @@ export function CowList() {
                   <option value="culled">Culled</option>
                 </select>
               </label>
-              <label className="text-sm text-slate-700 md:col-span-2">
-                <span className="mb-1 block font-medium">Notes</span>
-                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="min-h-[80px] w-full rounded-xl border border-slate-300 px-3 py-2" />
+              <label className="text-sm text-slate-700">
+                <span className="mb-1 block font-medium">Pregnancy Status</span>
+                <select value={form.pregnancyStatus} onChange={(e) => setForm({ ...form, pregnancyStatus: e.target.value as Cow['pregnancyStatus'] })} className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white">
+                  <option value="open">Open</option>
+                  <option value="bred">Bred</option>
+                  <option value="confirmed">Confirmed Pregnant</option>
+                  <option value="dry">Dry</option>
+                </select>
+              </label>
+              <label className="text-sm text-slate-700">
+                <span className="mb-1 block font-medium">Lactation Number</span>
+                <input type="number" min="0" value={form.lactationNumber} onChange={(e) => setForm({ ...form, lactationNumber: Number(e.target.value) || 0 })} className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white" />
               </label>
             </div>
 
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <h5 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            {/* MOTHER LINKING (Only if Calf) */}
+            {form.status === 'calf' && (
+              <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                <label className="text-sm text-slate-700 block">
+                  <span className="mb-1 block font-medium text-orange-800 flex items-center gap-2"><Baby size={16}/> Link to Mother (Optional)</span>
+                  <select value={form.motherId} onChange={(e) => setForm({ ...form, motherId: e.target.value })} className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white">
+                    <option value="">Unknown / Unlinked</option>
+                    {potentialMothers.map(cow => (
+                      <option key={cow.id} value={cow.id}>{cow.name || cow.tagId}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {/* RESTORED: INITIAL VITALS */}
+            <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+              <h5 className="text-sm font-bold text-emerald-800 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Activity size={16} /> Initial Vitals (Optional)
               </h5>
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="text-sm text-slate-700">
                   <span className="mb-1 block font-medium">Weight (kg)</span>
-                  <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="e.g. 450" className="w-full rounded-xl border border-slate-300 px-3 py-2" />
+                  <input type="number" min="0" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="e.g. 450" className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white" />
                 </label>
                 <label className="text-sm text-slate-700">
                   <span className="mb-1 block font-medium">Body Condition (1-5)</span>
-                  <input type="number" min="1" max="5" step="0.25" value={form.bcs} onChange={(e) => setForm({ ...form, bcs: e.target.value })} placeholder="e.g. 3.5" className="w-full rounded-xl border border-slate-300 px-3 py-2" />
+                  <input type="number" min="1" max="5" step="0.25" value={form.bcs} onChange={(e) => setForm({ ...form, bcs: e.target.value })} placeholder="e.g. 3.5" className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white" />
                 </label>
                 <label className="text-sm text-slate-700">
                   <span className="mb-1 block font-medium">Temp (°C)</span>
-                  <input type="number" min="30" max="45" step="0.1" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: e.target.value })} placeholder="e.g. 38.5" className="w-full rounded-xl border border-slate-300 px-3 py-2" />
+                  <input type="number" min="30" max="45" step="0.1" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: e.target.value })} placeholder="e.g. 38.5" className="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white" />
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            {/* NOTES */}
+            <label className="text-sm text-slate-700 block">
+              <span className="mb-1 block font-medium">Notes</span>
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="min-h-[80px] w-full rounded-xl border border-slate-300 px-3 py-2" />
+            </label>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button type="button" onClick={() => setOpenForm(false)} className="rounded-xl border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50">Cancel</button>
               <button type="submit" className="rounded-xl bg-orange-600 px-6 py-2 text-white hover:bg-orange-700">Save cow</button>
             </div>
@@ -222,11 +278,18 @@ export function CowList() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredCows.length > 0 ? (
           filteredCows.map((cow) => (
-            <div key={cow.id} className="flex flex-col relative group">
+            <div key={cow.id} className="flex flex-col">
               <Link to={`/cows/${cow.id}`}>
                 <CowCard cow={cow} />
               </Link>
-              <div className="mt-3 flex justify-end">
+              
+              <div className="mt-3 flex justify-between items-center">
+                <Link 
+                  to={`/calves?mother=${cow.id}`} 
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-orange-50 px-3 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors border border-orange-100"
+                >
+                  <Baby size={14} /> View Calves
+                </Link>
                 <button
                   type="button"
                   onClick={() => handleDelete(cow.id)}

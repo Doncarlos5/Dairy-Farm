@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, Droplets, Activity, HeartPulse, ArrowRight, Bell, Milk, Sun, AlertOctagon, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Users, Droplets, Activity, HeartPulse, ArrowRight, Bell, Milk, Sun, AlertOctagon, CheckCircle2, AlertCircle, Package } from 'lucide-react'
 import type { Cow, MilkRecord, HealthRecord, BreedingRecord } from '../../lib/schemas'
 import { Card } from '../../components/Card'
 import { useAuth } from '../auth/AuthContext'
@@ -8,6 +8,7 @@ import { getAllCows } from '../cows/cowService'
 import { getAllMilkRecords } from '../milk/milkService'
 import { getAllHealthRecords, isUnderWithdrawal } from '../health/healthService'
 import { getAllBreedingRecords } from '../breeding/breedingService'
+import { getAllFeed } from '../feed/feedService'
 
 export function Dashboard() {
   const { profile } = useAuth()
@@ -17,6 +18,7 @@ export function Dashboard() {
   const [milkRecords, setMilkRecords] = useState<MilkRecord[]>([])
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([])
   const [breedingRecords, setBreedingRecords] = useState<BreedingRecord[]>([])
+   const [feed, setFeed] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,16 +26,18 @@ export function Dashboard() {
       if (!farmId) return
       try {
         setLoading(true)
-        const [cowsData, milkData, healthData, breedingData] = await Promise.all([
+        const [cowsData, milkData, healthData, breedingData, feedData] = await Promise.all([
           getAllCows(farmId),
           getAllMilkRecords(farmId),
           getAllHealthRecords(farmId),
-          getAllBreedingRecords(farmId)
+          getAllBreedingRecords(farmId),
+          getAllFeed(farmId)
         ])
         setCows(cowsData)
         setMilkRecords(milkData)
         setHealthRecords(healthData)
         setBreedingRecords(breedingData)
+         setFeed(feedData || [])
       } catch (err) {
         console.error('Failed to load dashboard:', err)
       } finally {
@@ -89,25 +93,38 @@ export function Dashboard() {
 
       const daysToCalving = Math.ceil((calvingDate.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24))
       
-      if (daysToCalving >= 30 && daysToCalving <= 40) {
-        updates.push({ type: 'Dry Off Time', message: `Stop milking now (calving in ${daysToCalving} days)`, cow: cowName, color: 'bg-orange-50 text-orange-800 border-orange-200', icon: Droplets })
+            // Dry Off (Approx 60 days / 2 months before calving)
+      if (daysToCalving >= 55 && daysToCalving <= 65) {
+        updates.push({ type: 'Dry Off Due', message: `Stop milking now (calving in ${daysToCalving} days)`, cow: cowName, color: 'bg-orange-50 text-orange-800 border-orange-200', icon: Droplets })
       }
       
+      // Steaming Up (Approx 21 days / 3 weeks before calving)
       if (daysToCalving >= 18 && daysToCalving <= 24) {
-        updates.push({ type: 'Steaming Up', message: `Move to maternity pen (calving in ${daysToCalving} days)`, cow: cowName, color: 'bg-purple-50 text-purple-800 border-purple-200', icon: Activity })
+        updates.push({ type: 'Steaming Up', message: `Move to close-up pen (calving in ${daysToCalving} days)`, cow: cowName, color: 'bg-purple-50 text-purple-800 border-purple-200', icon: Activity })
       }
 
+      // Calving Soon (0 to 7 days before)
       if (daysToCalving >= 0 && daysToCalving <= 7) {
         updates.push({ type: 'Calving Soon', message: `Due to calve in ${daysToCalving} days`, cow: cowName, color: 'bg-amber-50 text-amber-800 border-amber-200', icon: Bell })
       }
-      
-      if (daysToCalving < 0) {
-        updates.push({ type: 'Overdue Calving', message: `Overdue by ${Math.abs(daysToCalving)} days. Inform Vet!`, cow: cowName, color: 'bg-red-600 text-white border-red-700', icon: AlertOctagon })
-      }
     }
   })
+     // 3. Low Stock Alerts
+    feed.forEach(item => {
+        if (item.quantity <= item.reorderLevel) {
+          updates.push({
+            type: 'Low Feed Stock',
+            message: `Only ${item.quantity} ${item.unit} left. Reorder soon!`,
+            cow: item.name, // Using 'cow' field for the item name to match the UI
+            color: 'bg-amber-100 text-amber-800 border-amber-200',
+            icon: Package
+          })
+        }
+      })
 
-  // 3. Undone Tasks (Missing Milk from Yesterday)
+   
+
+  // 4. Undone Tasks (Missing Milk from Yesterday)
   const cowsMilkedYesterday = new Set(milkRecords.filter(m => m.date === yesterdayStr).map(m => m.cowId))
   const missedMilkCows = cows.filter(c => c.status === 'in_milk' && !cowsMilkedYesterday.has(c.id))
   

@@ -1,4 +1,4 @@
-import { BookOpen, Users, Droplets, Activity, HeartPulse, Coins, MessageSquare } from 'lucide-react'
+import { BookOpen, Users, Droplets, Activity, HeartPulse, Coins, MessageSquare, Package } from 'lucide-react'
 import { Card } from '../../components/Card'
 
 export function Info() {
@@ -6,38 +6,44 @@ export function Info() {
     {
       icon: Users,
       color: 'text-emerald-600 bg-emerald-100',
-      title: 'Managing Cows',
-      desc: 'Go to the Cows tab to register new animals. Click on any cow to see their full profile, upload a photo, and view their specific milk and health history.'
+      title: 'Managing Cows & Calves',
+      desc: 'Go to the Cows tab to register animals. You can link a new calf to its mother during registration. Click "View Calves" on any cow to see her lineage, or go to the dedicated Calves tab.'
     },
     {
       icon: Droplets,
       color: 'text-blue-600 bg-blue-100',
-      title: 'Logging Milk',
-      desc: 'Go to Milk Records to log daily production. Select the cow, the session (AM/PM), and the litres produced. The dashboard will automatically update your daily totals.'
+      title: 'Milk Records & Sales',
+      desc: 'Log daily production in the Milk tab. Staff can also record End of Day Sales here, which are sent to the Owner for approval before they count towards income.'
     },
     {
       icon: Activity,
       color: 'text-violet-600 bg-violet-100',
-      title: 'Breeding & Alerts',
-      desc: 'Log insemination dates in the Breeding tab. The Dashboard will automatically alert you when a cow is due for a heat check, pregnancy check, or dry-off.'
+      title: 'Breeding & Maternity',
+      desc: 'Log AI dates to automatically calculate calving dates. The Maternity Pen automatically pulls in cows that are 60 days from calving so you know when to Dry Off, and 21 days from calving for Steaming.'
     },
     {
       icon: HeartPulse,
       color: 'text-rose-600 bg-rose-100',
       title: 'Health Records',
-      desc: 'Record any illnesses, drugs administered, and withdrawal periods. Cows under withdrawal will be flagged with an amber warning so their milk is not sold.'
+      desc: 'Record illnesses, drugs, and withdrawal periods. If you enter a Vet cost, the system automatically logs it as a pending expense for the Owner.'
+    },
+    {
+      icon: Package,
+      color: 'text-amber-600 bg-amber-100',
+      title: 'Feed & Stock',
+      desc: 'Track feed inventory. Use the "Log Feeding" button to deduct stock (either for a specific cow or for the whole calf pen). Use the End of Day Audit to report any missing stock.'
     },
     {
       icon: Coins,
       color: 'text-orange-600 bg-orange-100',
       title: 'Finances (Owner Only)',
-      desc: 'Record milk sales and expenses to see your net profit. This tab is hidden from staff members to keep your financial data secure.'
+      desc: 'Record milk sales and expenses to see your net profit. This tab is hidden from staff members. Owners must approve pending expenses logged by staff.'
     },
     {
       icon: MessageSquare,
       color: 'text-slate-600 bg-slate-100',
       title: 'Farm Chat',
-      desc: 'Use the Chat tab to communicate instantly with other users on the farm. Look out for the red notification dot when a new message arrives.'
+      desc: 'Use the Chat tab to communicate instantly with other users. End of Day Feed Audit reports are automatically sent here for the Owner to review.'
     }
   ]
 

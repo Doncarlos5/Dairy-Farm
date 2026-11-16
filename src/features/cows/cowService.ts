@@ -15,6 +15,7 @@ function mapCow(row: any): Cow {
     pregnancyStatus: row.pregnancy_status,
     notes: row.notes ?? undefined,
     photo: row.photo_url ?? undefined,
+    motherId: row.mother_id || undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at)
   }
@@ -48,6 +49,7 @@ export async function updateCow(id: string, changes: Partial<Cow>): Promise<void
   if (changes.calfDetails !== undefined) updates.calf_details = changes.calfDetails
   if (changes.weight !== undefined) updates.weight = changes.weight
   if (changes.bcs !== undefined) updates.bcs = changes.bcs
+  if (changes.motherId !== undefined) updates.mother_id = changes.motherId
 
   updates.updated_at = new Date().toISOString()
 
@@ -65,7 +67,8 @@ export async function addCow(cow: Cow): Promise<void> {
     lactation_number: cow.lactationNumber,
     status: cow.status,
     pregnancy_status: cow.pregnancyStatus,
-    notes: cow.notes
+    notes: cow.notes,
+    mother_id: cow.motherId
   })
 
   if (error) throw error
